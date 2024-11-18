@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/fs"
 	"log"
 	"net/http"
@@ -22,5 +23,6 @@ func main() {
 	// Sirviendo archivos estáticos
 	router.PathPrefix("/").Handler(filesStatic)
 	// Arrancando el servidor
-	http.ListenAndServe(":8000", router)
+	fmt.Println("server on port 8080")
+	http.ListenAndServe(":8080", router)
 }
