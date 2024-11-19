@@ -11,8 +11,8 @@ let listDataCategory = ref([])
 const show = ref(false)
 
 async function getData() {
-  show.value = true
   try {
+  show.value = true
 
     let data = await getTopProduct()
     let dataCategory = await getCategory()
@@ -27,9 +27,9 @@ async function getData() {
 
 async function categorySelected(categoria) {
     show.value = true
-  if (categoria.value != 0) {
 
-    let newData = await getListProductCategory(categoria.text.trim())
+  if (categoria.value != 0) {
+    let newData = await getListProductCategory(categoria.value)
     listData.value = newData
   }else{
     let newData = await getTopProduct()

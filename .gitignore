@@ -1,0 +1,4 @@
+ui/dist/*
+public
+ui/shopy/.idea
+tmp/*

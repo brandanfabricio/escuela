@@ -1,5 +1,5 @@
 function getTopProduct() {
-  return  fetch('https://fakestoreapi.com/products')
+  return  fetch('http://luquin.test:8080/api/products/list-products')
     .then((res) => res.json())
     .then((jsonData) => {
       return jsonData
@@ -10,7 +10,7 @@ function getTopProduct() {
 }
 
 function getCategory() {
-  return  fetch('https://fakestoreapi.com/products/categories')
+  return  fetch('http://luquin.test:8080/api/products/categories')
     .then((res) => res.json())
     .then((jsonData) => {
       return jsonData
@@ -21,7 +21,7 @@ function getCategory() {
 }
 
 function getListProductCategory(category) {
-  return  fetch(`https://fakestoreapi.com/products/category/${category}`)
+  return  fetch(`http://luquin.test:8080/api/products/category/${category}`)
     .then((res) => res.json())
     .then((jsonData) => {
       return jsonData

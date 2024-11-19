@@ -12,10 +12,8 @@ const options= ref ([{ value: 0, text: '-- porfavor selectcione un opcion --' }]
 watch(
   () => props.listDataCategory,
   (data)=>{
-    let id = 1;
     data.forEach((item)=>{
-      options.value.push( { value: id, text: ' '+item })
-      id++
+      options.value.push( { value: item.id, text: ' '+item.name })
     })
   }
 )

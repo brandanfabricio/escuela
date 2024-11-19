@@ -1,11 +1,16 @@
 <script setup>
 import { BRow } from 'bootstrap-vue-3'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 const props = defineProps(['listData'])
+
+
+
 
 function wasar(){
   open('https://wa.me/+543863410274?text=hols')
 }
+
+
 </script>
 
 <template>
