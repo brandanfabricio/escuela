@@ -197,6 +197,34 @@ func handleFileUpload(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+func delecteProdcuto(w http.ResponseWriter, r *http.Request) {
+	// Insertar producto en la base de datos
+	qryDelete := `DELECT FROM products WHERE id = ?;`
+
+	id := mux.Vars(r)["id"]
+
+	fmt.Println(id)
+
+	_, err := db.Exec(qryDelete, id)
+	if err != nil {
+		log.Fatalf("Error insertando producto: %v", err)
+	}
+
+	fmt.Println("Producto insertado exitosamente")
+
+	w.Header().Set("Content-Type", "application/json")
+	response := map[string]string{
+		"message": "Producto Eliminado exitosamente",
+		"id":      id,
+	}
+
+	json.NewEncoder(w).Encode(response)
+}
+func cleanProduct() {
+	fmt.Println("aki")
+
+}
+
 // ensureDir verifica si un directorio existe, y si no, lo crea
 func ensureDir(dir string) error {
 	// Verifica si el directorio ya existe
@@ -234,6 +262,8 @@ func main() {
 	router.HandleFunc("/api/products/list-products", getTopProducts).Methods("GET")
 	router.HandleFunc("/api/products/categories", getCategories).Methods("GET")
 	router.HandleFunc("/api/products/category/{category}", getProductsByCategory).Methods("GET")
+	router.HandleFunc("/api/products/{id}", delecteProdcuto).Methods("DELETE")
+	router.HandleFunc("/api/products/{id}", getProductsByCategory).Methods("POST")
 	router.HandleFunc("/api/new-products", handleFileUpload).Methods("POST")
 
 	// Archivos estáticos
