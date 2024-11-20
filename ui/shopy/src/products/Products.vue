@@ -30,7 +30,12 @@ async function categorySelected(categoria) {
 
   if (categoria.value != 0) {
     let newData = await getListProductCategory(categoria.value)
-    listData.value = newData
+    if (isNaN(newData)) {
+      listData.value = newData
+
+    }else {
+      listData.value = []
+    }
   }else{
     let newData = await getTopProduct()
     listData.value = newData

@@ -1,5 +1,5 @@
 function getListProduct() {
-  return fetch('luquin.test:8080/api/products/list-products')
+  return fetch('http://luquin.test:8080/api/products/list-products')
     .then((res) => res.json())
     .then((jsonData) => {
       return jsonData
@@ -10,7 +10,7 @@ function getListProduct() {
 }
 
 function getCategory() {
-  return fetch('luquin.test:8080/api/products/categories')
+  return fetch('http://luquin.test:8080/api/products/categories')
     .then((res) => res.json())
     .then((jsonData) => {
       return jsonData
@@ -23,12 +23,9 @@ function getCategory() {
 
 function postDate(formData) {
   try {
-  return   fetch(`https://fakestoreapi.com/products`, {
+  return   fetch(`http://luquin.test:8080/api/new-products`, {
       method: 'POST',
       body: formData,
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
     }).then(res => res.json())
       .then((jsonData) =>{
        return jsonData

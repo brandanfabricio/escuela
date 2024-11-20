@@ -147,7 +147,8 @@ function onSubmit(event) {
   event.preventDefault()
   show.value = true
   const formData = new FormData()
-  formData.append('category', form.value.category)
+    let category = options.value.find(cat => cat.text == form.value.category)
+  formData.append('category', category.value)
   formData.append('title', form.value.title)
   formData.append('description', form.value.description)
   formData.append('price', form.value.price)

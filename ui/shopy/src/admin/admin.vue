@@ -43,10 +43,8 @@ async function getData() {
 async function getDataCategory() {
   try {
     let dataCategory = await getCategory()
-    let id = 1
     dataCategory.forEach((item) => {
-      listCategory.value.push({ value: id, text: ' ' + item })
-      id++
+      listCategory.value.push({ value: item.id, text: ' ' + item.name })
     })
   } catch (err) {
     console.log(err)
