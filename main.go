@@ -199,7 +199,7 @@ func handleFileUpload(w http.ResponseWriter, r *http.Request) {
 
 func delecteProdcuto(w http.ResponseWriter, r *http.Request) {
 	// Insertar producto en la base de datos
-	qryDelete := `DELECT FROM products WHERE id = ?;`
+	qryDelete := `DELETE FROM products WHERE id = ?;`
 
 	id := mux.Vars(r)["id"]
 
@@ -210,8 +210,6 @@ func delecteProdcuto(w http.ResponseWriter, r *http.Request) {
 		log.Fatalf("Error insertando producto: %v", err)
 	}
 
-	fmt.Println("Producto insertado exitosamente")
-
 	w.Header().Set("Content-Type", "application/json")
 	response := map[string]string{
 		"message": "Producto Eliminado exitosamente",
@@ -220,13 +218,23 @@ func delecteProdcuto(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(response)
 }
-func cleanProduct() {
+func cleanProduct(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("aki")
+	id := mux.Vars(r)["id"]
 
+
+	
+	response := map[string]string{
+		"message": "Producto Eliminado exitosamente",
+		"id":      id,
+	}
+
+	json.NewEncoder(w).Encode(response)
 }
 
 // ensureDir verifica si un directorio existe, y si no, lo crea
 func ensureDir(dir string) error {
+
 	// Verifica si el directorio ya existe
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		// Crea el directorio con permisos 0755
@@ -263,7 +271,7 @@ func main() {
 	router.HandleFunc("/api/products/categories", getCategories).Methods("GET")
 	router.HandleFunc("/api/products/category/{category}", getProductsByCategory).Methods("GET")
 	router.HandleFunc("/api/products/{id}", delecteProdcuto).Methods("DELETE")
-	router.HandleFunc("/api/products/{id}", getProductsByCategory).Methods("POST")
+	router.HandleFunc("/api/products/{id}", cleanProduct).Methods("PUT")
 	router.HandleFunc("/api/new-products", handleFileUpload).Methods("POST")
 
 	// Archivos estáticos
