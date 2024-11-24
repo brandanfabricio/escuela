@@ -4,15 +4,18 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io"
-	"io/fs"
 	"log"
 	"net/http"
 	"os"
-	"shopy/ui"
+	"path/filepath"
 	"strconv"
+	"time"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/mux"
+	"golang.org/x/crypto/bcrypt"
 	_ "modernc.org/sqlite"
 )
 
@@ -32,10 +35,118 @@ type Category struct {
 	Name string `json:"name"`
 }
 
+var secretKey = []byte("your_secret_key")
+
+type User struct {
+	ID       int    `json:"id"`
+	Username string `json:"username"`
+	Password string `json:"password,omitempty"`
+}
+
+func registerUser(w http.ResponseWriter, r *http.Request) {
+	var user User
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	// Hash de la contraseña
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(w, "Error al encriptar contraseña", http.StatusInternalServerError)
+		return
+	}
+
+	// Guardar usuario en la base de datos
+	_, err = db.Exec("INSERT INTO users (username, password) VALUES (?, ?)", user.Username, hashedPassword)
+	if err != nil {
+		http.Error(w, "Error al registrar usuario", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	response := map[string]string{
+		"message": "Usuario registrado exitosamente",
+		"status":  "ok",
+	}
+
+	json.NewEncoder(w).Encode(response)
+}
+
+// Login de usuario
+func loginUser(w http.ResponseWriter, r *http.Request) {
+	var user User
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	// Obtener usuario de la base de datos
+	var storedPassword string
+	err := db.QueryRow("SELECT id, password FROM users WHERE username = ?", user.Username).Scan(&user.ID, &storedPassword)
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]string{
+			"msj":    "Usuario no encontrado",
+			"status": "Error",
+		})
+		return
+	}
+
+	// Verificar contraseña
+	if err := bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(user.Password)); err != nil {
+		json.NewEncoder(w).Encode(map[string]string{
+			"msj":    "Contraseña incorrecta",
+			"status": "Error",
+		})
+		return
+	}
+
+	// Generar token JWT
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id": user.ID,
+		"exp":     time.Now().Add(time.Hour * 2).Unix(),
+	})
+	tokenString, err := token.SignedString(secretKey)
+	if err != nil {
+		http.Error(w, "Error al generar token", http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]string{
+		"token":  tokenString,
+		"status": "ok",
+	})
+}
+
+// Middleware de autenticación
+func authMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		tokenString := r.Header.Get("Authorization")
+		if tokenString == "" {
+			http.Error(w, "Token no proporcionado", http.StatusUnauthorized)
+			return
+		}
+
+		// Validar token
+		claims := jwt.MapClaims{}
+		_, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+			return secretKey, nil
+		})
+		if err != nil {
+			http.Error(w, "Token inválido", http.StatusUnauthorized)
+			return
+		}
+
+		// Añadir información del usuario al contexto
+		r.Header.Set("User-ID", fmt.Sprintf("%v", claims["user_id"]))
+		next.ServeHTTP(w, r)
+	})
+}
+
 func getTopProducts(w http.ResponseWriter, r *http.Request) {
 	limit := r.URL.Query().Get("limit")
 	// qry := "SELECT id, title, price, image,description, category_id FROM products"
-	qry := "select    products.id, title, price, image,description, category_id,name from category  left join products  on category_id = products.category_id "
+	qry := "select    products.id, title, price, image,description, category_id,name from category  rigth join products  on category_id = products.category_id "
 	if limit != "" {
 		qry = qry + " LIMIT " + limit
 	}
@@ -218,18 +329,74 @@ func delecteProdcuto(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(response)
 }
-func cleanProduct(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("aki")
+func editProduct(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
+	fmt.Println(id)
 
+	// Obtener los campos del formulario
+	category := r.FormValue("category")
+	title := r.FormValue("title")
+	description := r.FormValue("description")
+	price := r.FormValue("price")
 
-	
+	queryEdit := `UPDATE products SET title = ?, price = ? , description = ?  ,category_id = ? WHERE id = ?;`
+
+	_, err := db.Exec(queryEdit, title, price, description, category, id)
+
+	if err != nil {
+		log.Fatalf("Error Editado producto: %v", err)
+
+		response := map[string]string{
+			"message": "Producto Editado exitosamente",
+			"id":      id,
+			"edit":    "no",
+		}
+
+		json.NewEncoder(w).Encode(response)
+
+	}
+
+	fmt.Println("Producto Editado exitosamente")
+
 	response := map[string]string{
-		"message": "Producto Eliminado exitosamente",
+		"message": "Producto Editado exitosamente",
 		"id":      id,
+		"edit":    "ok",
 	}
 
 	json.NewEncoder(w).Encode(response)
+
+	// body, err := io.ReadAll(r.Body)
+	// if err != nil {
+	// 	http.Error(w, "Unable to read request body", http.StatusBadRequest)
+	// 	return
+	// }
+	// defer r.Body.Close()
+	// var data Product
+	// if err := json.Unmarshal(body, &data); err != nil {
+	// 	http.Error(w, "Invalid JSON format", http.StatusBadRequest)
+	// 	return
+	// }
+	// fmt.Println(data)
+	// fmt.Println(data.Price)
+
+	// queryEdit := `UPDATE products SET title = ?, price = ? , description = ?  ,category_id = ? WHERE id = ?;`
+
+	// _, err = db.Exec(queryEdit, data.Title, data.Price, data.Description, data.Category_id, data.ID)
+
+	// if err != nil {
+	// 	log.Fatalf("Error Editado producto: %v", err)
+	// }
+
+	// fmt.Println("Producto Editado exitosamente")
+
+	// response := map[string]string{
+	// 	"message": "Producto Editado exitosamente",
+	// 	"id":      id,
+	// }
+
+	// json.NewEncoder(w).Encode(response)
+
 }
 
 // ensureDir verifica si un directorio existe, y si no, lo crea
@@ -266,34 +433,60 @@ func main() {
 	// Router
 	router := mux.NewRouter()
 
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		distDir := "./public"
+		// Ruta completa del archivo HTML
+		htmlFile := filepath.Join(distDir, "index.html")
+
+		tmp, err := template.ParseFiles(htmlFile)
+		if err != nil {
+			fmt.Println(err)
+		}
+		w.Header().Set("Content-Type", "text/html")
+		tmp.Execute(w, nil)
+	})
+
+	// Rutas de autenticación
+	router.HandleFunc("/api/register", registerUser).Methods("POST")
+	router.HandleFunc("/api/login", loginUser).Methods("POST")
 	// Rutas de la API
+	// Proteger rutas con middleware
+
 	router.HandleFunc("/api/products/list-products", getTopProducts).Methods("GET")
 	router.HandleFunc("/api/products/categories", getCategories).Methods("GET")
 	router.HandleFunc("/api/products/category/{category}", getProductsByCategory).Methods("GET")
 	router.HandleFunc("/api/products/{id}", delecteProdcuto).Methods("DELETE")
-	router.HandleFunc("/api/products/{id}", cleanProduct).Methods("PUT")
+	router.HandleFunc("/api/products/{id}", editProduct).Methods("PUT")
 	router.HandleFunc("/api/new-products", handleFileUpload).Methods("POST")
 
-	// Archivos estáticos
-	embetStatic, err := fs.Sub(ui.StaticFiles, "dist")
-	if err != nil {
-		log.Fatal(err)
-	}
-	filesStatic := http.FileServer(http.FS(embetStatic))
-	router.PathPrefix("/").Handler(filesStatic)
-	// Archivos estáticos (carpeta `public`)
-	publicDir := "./public"
-	if _, err := os.Stat(publicDir); os.IsNotExist(err) {
-		fmt.Printf("Carpeta %s no encontrada, creándola...\n", publicDir)
-		os.MkdirAll(publicDir, os.ModePerm)
-	}
 	router.PathPrefix("/public/").Handler(http.StripPrefix("/public", http.FileServer(http.Dir("public"))))
+	router.PathPrefix("/assets").Handler(http.StripPrefix("/assets", http.FileServer(http.Dir("public/assets"))))
+	// router.PathPrefix("/assets/").Handler(http.StripPrefix("/assets", http.FileServer(http.Dir("assets"))))
+	// router.Handle("/assets/", http.StripPrefix("/assets", http.FileServer(http.Dir("dist/static"))))
+
+	// router.Handle("/dist/", http.StripPrefix("/dist", http.FileServer(http.Dir("dist"))))
+
+	// // Archivos estáticos
+	// embetStatic, err := fs.Sub(ui.StaticFiles, "dist")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// filesStatic := http.FileServer(http.FS(embetStatic))
+	// router.PathPrefix("/").Handler(filesStatic)
+	// // Archivos estáticos (carpeta `public`)
+	// publicDir := "./public"
+	// if _, err := os.Stat(publicDir); os.IsNotExist(err) {
+	// 	fmt.Printf("Carpeta %s no encontrada, creándola...\n", publicDir)
+	// 	os.MkdirAll(publicDir, os.ModePerm)
+	// }
+	// router.PathPrefix("/public/").Handler(http.StripPrefix("/public", http.FileServer(http.Dir("public"))))
 	// http.Handle("/public/", http.StripPrefix("/public", http.FileServer(http.Dir("public"))))
 
 	// Servidor
 	fmt.Println("Server running on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", addCORSHeaders(router)))
 }
+
 func addCORSHeaders(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -320,6 +513,10 @@ func createTables() {
 			image TEXT DEFAULT NULL,
 			category_id INTEGER NOT NULL,
 			FOREIGN KEY(category_id) REFERENCES category(id)
+		)`, `CREATE TABLE IF NOT EXISTS users (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			username TEXT UNIQUE NOT NULL,
+			password TEXT NOT NULL
 		)`,
 	}
 	for _, query := range queries {

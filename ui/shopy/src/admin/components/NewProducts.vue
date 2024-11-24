@@ -16,10 +16,11 @@
             <input
               type="file"
               id="fileInput"
-              accept=".jpg,.png"
+              accept=".jpg,.png,.jpeg"
               @change="handleFileChange"
               ref="fileInput"
               class="file-hidden-input"
+              :disabled="edit"
             />
             <div class="icon-upload" @click="triggerFileInput">
               <i class="bi bi-upload"></i>
@@ -89,7 +90,13 @@
           </b-col>
         </b-row>
 
-        <div class="d-flex justify-content-end">
+        <div v-if="edit" class="d-flex justify-content-end">
+          <b-button :disabled="isDesable" class="mt-2" size="sm" id="input-10" variant="primary" @click="onSubmitUpdate">
+            Editar
+          </b-button>
+        </div>
+
+        <div v-else class="d-flex justify-content-end">
           <b-button :disabled="isDesable" class="mt-2" size="sm" id="input-10" variant="primary" @click="onSubmit">
             Guardar
           </b-button>
@@ -100,12 +107,12 @@
 </template>
 <script setup>
 import MainView from '@/components/MainView.vue'
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { BForm } from 'bootstrap-vue-3'
 const show = ref(true);
 
 const emit = defineEmits(['goToList','formPostData'])
-const props = defineProps(['listCategory'])
+const props = defineProps(['listCategory','editData'])
 const fileName = ref(null) // Almacena el nombre del archivo
 const file = ref(null) // Almacena el nombre del archivo
 const fileInput = ref(null) // Referencia al input de archivo
@@ -117,7 +124,14 @@ const form = ref({
   title: '',
   description: '',
   price: '',
+  id: '',
+
 })
+
+const edit = ref(false)
+
+
+
 watch(selected, (data) => {
   if (data == 0) {
     document.querySelector('#input-6').disabled = false
@@ -156,6 +170,19 @@ function onSubmit(event) {
   emit('formPostData',formData)
 
 }
+function onSubmitUpdate(event) {
+  event.preventDefault()
+  show.value = true
+  const formData = new FormData()
+  let category = options.value.find(cat => cat.text == form.value.category)
+  formData.append('category', category.value)
+  formData.append('title', form.value.title)
+  formData.append('description', form.value.description)
+  formData.append('price', form.value.price)
+  formData.append('files', file.value)
+  emit('formPostDataEdit',formData,form.value.id)
+}
+
 
 const handleFileChange = (event) => {
   const files = event.target.files[0]
@@ -166,6 +193,25 @@ const handleFileChange = (event) => {
 const triggerFileInput = () => {
   fileInput.value.click()
 }
+
+function loadEdit(){
+  if (props.editData != null){
+    edit.value = true
+    selected.value = props.editData.category_id
+    form.value.id = props.editData.id
+    form.value.title = props.editData.title
+    form.value.price = props.editData.price
+    //form.value.category = props.editData.category
+    form.value.description = props.editData.description
+  }else {
+    edit.value = false
+  }
+}
+
+onMounted(()=>{
+loadEdit()
+})
+
 </script>
 <style scoped>
 .custom-file-icon-wrapper {

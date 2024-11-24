@@ -1,4 +1,40 @@
-<script setup></script>
+<script setup>
+import { onMounted, onUpdated, ref } from 'vue'
+import { BContainer } from 'bootstrap-vue-3'
+import router from '@/router/index.js'
+import { updateData } from '@/admin/service/testApi.js'
+
+const props = defineProps(['LoginviewAdmin'])
+const viewAdmin = ref(false)
+
+function isAdmin() {
+  let session = localStorage.getItem('isAdmin')
+  if (session != null) {
+    if (session){
+    viewAdmin.value = true
+
+    }else{
+    viewAdmin.value = false
+
+    }
+  }
+}
+
+function cerrarSession(){
+  viewAdmin.value = false
+  localStorage.removeItem('isAdmin')
+  router.push("/")
+}
+
+onMounted(() => {
+  viewAdmin.value = props.LoginviewAdmin
+  isAdmin()
+})
+onUpdated(()=>{
+  console.log("aki")
+  viewAdmin.value = props.LoginviewAdmin
+})
+</script>
 <template>
   <b-container fluid="lg" class="p-2">
     <b-navbar toggleable="lg">
@@ -26,18 +62,40 @@
           <router-link class="nav-item nav-link mt-2 colo-gris2 textHover" to="/about"
             >Contacto
           </router-link>
-          <router-link class="nav-item nav-link mt-1 colo-gris2" to="/admin">
+          <router-link
+            v-if="viewAdmin"
+            class="nav-item nav-link mt-2 colo-gris2 textHover"
+            to="/admin"
+            >Admin
+          </router-link>
+          <div v-if="!viewAdmin" class="nav-item nav-link mt-1 colo-gris2">
+            <b-button
+              pill
+              size="sm"
+              variant="outline-secondary"
+              data-bs-toggle="modal"
+              data-bs-target="#loginModal"
+              class="nav-btn btn-hover-color-blue colo-gris2 btn-border-color-grey btn-conten-flex"
+            >
+              <!-- <b-avatar size="sm"></b-avatar> -->
+              <i class="bi bi-person"></i>
+              Ingresar
+            </b-button>
+          </div>
+          <div v-else class="nav-item nav-link mt-1 colo-gris2">
             <b-button
               pill
               size="sm"
               variant="outline-secondary"
               class="nav-btn btn-hover-color-blue colo-gris2 btn-border-color-grey btn-conten-flex"
+              @click="cerrarSession"
             >
               <!-- <b-avatar size="sm"></b-avatar> -->
-              <img src="" alt="" class="img-fluid" />
-              Ingresar
+              <i class="bi bi-person"></i>
+              Cerrar
             </b-button>
-          </router-link>
+          </div>
+
         </ul>
       </b-collapse>
     </b-navbar>

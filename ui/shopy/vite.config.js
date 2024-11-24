@@ -11,7 +11,7 @@ export default defineConfig({
     vueDevTools(),
   ],
   build:{
-    outDir:'../dist'
+    outDir:'../../build/public'
   },
   resolve: {
     alias: {
