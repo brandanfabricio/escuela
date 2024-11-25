@@ -228,8 +228,10 @@ func handleFileUpload(w http.ResponseWriter, r *http.Request) {
 
 	// Obtener los campos del formulario
 	category := r.FormValue("category")
+	categoryName := r.FormValue("categoryName")
 	title := r.FormValue("title")
 	description := r.FormValue("description")
+
 	price := r.FormValue("price")
 
 	// Validar campos requeridos
@@ -244,6 +246,12 @@ func handleFileUpload(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Número como int:", num)
 	}
 	newPrice := num
+
+	categoryId, err := strconv.Atoi(category) // Convierte a int
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+
 	// Obtener el archivo subido
 	file, header, err := r.FormFile("files")
 
@@ -279,13 +287,30 @@ func handleFileUpload(w http.ResponseWriter, r *http.Request) {
 	// // Aquí puedes guardar los datos en la base de datos
 	fmt.Printf("Nuevo producto:\nCategory: %s\nTitle: %s\nDescription: %d\nPrice: %s\nImage Path: %s\n", category, title, description, newPrice, filePath)
 
+	if categoryId == 0 {
+		queryCategori := `INSERT INTO category ( name) VALUES (?);`
+
+		newCategory, err := db.Exec(queryCategori, categoryName)
+		if err != nil {
+			log.Fatalf("Error crear  categoria: %v", err)
+		}
+
+		fmt.Println("categoria insertado exitosamente")
+		newCategoryId, err := newCategory.LastInsertId()
+		if err != nil {
+			log.Fatalf("Error crear  categoria: %v", err)
+		}
+		categoryId = int(newCategoryId)
+	}
+
 	newProduct := Product{
 		Title:       title,
 		Price:       newPrice,
 		Description: description,
 		Image:       filePath,
-		Category_id: 1,
+		Category_id: categoryId,
 	}
+
 	// Insertar producto en la base de datos
 	insertProductQuery := `
 		INSERT INTO products ( title, price,  description, image,category_id) 

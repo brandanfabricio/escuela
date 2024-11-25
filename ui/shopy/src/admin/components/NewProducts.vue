@@ -116,7 +116,7 @@ const props = defineProps(['listCategory','editData'])
 const fileName = ref(null) // Almacena el nombre del archivo
 const file = ref(null) // Almacena el nombre del archivo
 const fileInput = ref(null) // Referencia al input de archivo
-const selected = ref(0)
+const selected = ref(-1)
 const options= ref (props.listCategory)
 const imageUrls = ref('');
 const form = ref({
@@ -161,8 +161,18 @@ function onSubmit(event) {
   event.preventDefault()
   show.value = true
   const formData = new FormData()
-    let category = options.value.find(cat => cat.text == form.value.category)
+  let category
+  if(selected.value == 0){
+    category = options.value.find(cat => cat.value == selected.value )
+
+  }else {
+
+    category = options.value.find(cat => cat.text == form.value.category)
+
+  }
+
   formData.append('category', category.value)
+  formData.append('categoryName', form.value.category)
   formData.append('title', form.value.title)
   formData.append('description', form.value.description)
   formData.append('price', form.value.price)
