@@ -3,60 +3,62 @@ import { BRow } from 'bootstrap-vue-3'
 import { ref, watch } from 'vue'
 const props = defineProps(['listData'])
 
-
-
-
-function wasar(){
+function wasar() {
   open('https://wa.me/+543863410274?text=hols')
 }
-
-
 </script>
 
 <template>
   <div>
     <b-row align-h="between border-bottom ">
-      <b-col sm="2" >
+      <b-col sm="2">
         <small class="m-2"> inicio / Tienda </small>
       </b-col>
-      <b-col sm="6" >
+      <b-col sm="6">
         <div class="d-flex justify-content-around">
-
-          <small>  stock total = {{ props.listData.length}} </small>
-          <small> silo de cuado </small>
-          <small> orden</small>
+          <div class="text-center color-font">
+              Stock total <b-badge  variant="light">{{ props.listData.length }}</b-badge>
+          </div>
+          
+          <!-- <small> silo de cuado </small>
+          <small> orden</small> -->
         </div>
       </b-col>
     </b-row>
-    <b-row class="mt-3 ">
-      <b-col sm="4" v-for="(item,index) in props.listData" :key="index" class="list-produts">
+    <b-row class="mt-3">
+      <b-col sm="4" v-for="(item, index) in props.listData" :key="index" class="list-produts">
         <div class="card p-4 position-relative">
           <img :src="item.image" alt="Imagen" class="card-img img-fluid" />
           <div class="card-body d-flex flex-column text-center">
             <h5 class="card-title">{{ item.title }}</h5>
-            <p class="card-description">{{ item.description.slice(0,50) }}</p>
+            <p class="card-description">{{ item.description.slice(0, 50) }}</p>
             <span class="card-price">${{ item.category }}</span>
             <span class="card-price">${{ item.price }}</span>
           </div>
-          <div class="card-wasap position-absolute top-0 end-0 " >
-            <b-button variant="outline-success"  class="card-wasap-btn" @click="wasar">Consultar</b-button>
+          <div class="card-wasap position-absolute top-0 end-0">
+            <b-button variant="outline-success" class="card-wasap-btn" @click="wasar"
+              >Consultar</b-button
+            >
           </div>
         </div>
       </b-col>
     </b-row>
-
   </div>
-
 </template>
 
 <style scoped>
+.color-font{
+  background-color: #6c757d;
+  border-radius: 5px;
+  padding: 5px;
+  color: #fff;
+}
 .list-produts {
   transition: var(--tran-05);
 }
 .card-img {
   height: 280px;
   width: 80%;
-
 }
 
 .card-description {
@@ -79,12 +81,10 @@ function wasar(){
 
 .card-container {
   border: 1px solid red;
-
 }
 
 .card-wasap-btn {
   right: 10px;
-
 }
 </style>
 
@@ -102,9 +102,9 @@ function wasar(){
 }
 </style>
 <style scoped>
-@media screen and (max-width: 768px){
+@media screen and (max-width: 768px) {
   .card-img {
-    width:  80%;
+    width: 80%;
     height: 180px;
   }
 }

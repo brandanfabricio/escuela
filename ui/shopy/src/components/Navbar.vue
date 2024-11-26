@@ -41,7 +41,7 @@ onUpdated(()=>{
       <b-navbar-brand href="/">
         <router-link to="/">
           <img
-            src="@/assets/logo.svg"
+            src="@/assets/img/logo.jpg"
             width="70"
             alt="Logo milenia"
             class="img-fluid img-thumbnail border-0"
