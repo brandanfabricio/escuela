@@ -3,9 +3,12 @@ import { BImg } from 'bootstrap-vue-3'
 
 const props = defineProps(['listData'])
 
-function wasar(){
+function wasar(item){
+  console.log(item);
+  
+  let mjs = `https://wa.me/+543863404653?text=Buenas tiene en stock  El Prodcuto ${item.title} id-${item.id}`
   console.log("aki")
-  open('https://wa.me/+543863410274?text=hols')
+  open(mjs)
 }
 </script>
 
@@ -32,7 +35,7 @@ function wasar(){
           <span class="card-price">${{ item.price }}</span>
         </div>
         <div class="card-footer">
-          <b-button variant="outline-success" @click="wasar">Consultar</b-button>
+          <b-button variant="outline-success" @click="wasar(item)">Consultar</b-button>
         </div>
       </div>
     </b-col>
