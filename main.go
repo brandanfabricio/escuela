@@ -146,7 +146,7 @@ func authMiddleware(next http.Handler) http.Handler {
 func getTopProducts(w http.ResponseWriter, r *http.Request) {
 	limit := r.URL.Query().Get("limit")
 	// qry := "SELECT id, title, price, image,description, category_id FROM products"
-	qry := "select    products.id, title, price, image,description, category_id,name from category  rigth join products  on category_id = products.category_id "
+	qry := "select   products.id, title, price, image,description, category_id  from products  left join category on  category.id = products.category_id"
 	if limit != "" {
 		qry = qry + " LIMIT " + limit
 	}
@@ -156,10 +156,11 @@ func getTopProducts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer rows.Close()
+
 	var products []Product
 	for rows.Next() {
 		var p Product
-		if err := rows.Scan(&p.ID, &p.Title, &p.Price, &p.Image, &p.Description, &p.Category_id, &p.Name); err != nil {
+		if err := rows.Scan(&p.ID, &p.Title, &p.Price, &p.Image, &p.Description, &p.Category_id); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
